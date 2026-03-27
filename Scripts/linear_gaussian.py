@@ -1,6 +1,6 @@
 import numpy as np
 
-with np.load(r'data/moons.npz') as data:
+with np.load(r'../Starter-datasets-and-scripts/data/linear_gaussian.npz') as data:
     X_train = data['X_train']
     y_train=data['y_train']
 
@@ -53,7 +53,7 @@ eta=0.1 #Learning rate
 #W-=eta*dW
 #b-=eta*db
 
-epochs=900
+epochs=200
 
 
 ##Step 7
@@ -81,7 +81,7 @@ for epoch in range(epochs):
     W-=eta*dW
     b-=eta*db
 
-    if epoch % 100 == 0:
+    if epoch % 10 == 0:
         print(f"Epoch {epoch}: Loss {loss:.4f}")
         logits_val=np.dot(X_val, W) + b
         exp_val=np.exp(logits_val-np.max(logits_val,axis=1,keepdims=True))
