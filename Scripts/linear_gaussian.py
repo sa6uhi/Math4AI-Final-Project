@@ -1,6 +1,6 @@
 import numpy as np
 
-with np.load(r'data/linear_gaussian.npz') as data:
+with np.load(r'../Starter-datasets-and-scripts/data/linear_gaussian.npz') as data:
     X_train = data['X_train']
     y_train=data['y_train']
 
