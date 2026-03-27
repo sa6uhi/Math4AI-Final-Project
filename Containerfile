@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1
+FROM python:3.13-slim-bookworm AS build
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
+
+FROM python:3.13-slim-bookworm AS runtime
+
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -g appgroup -m -d /home/appuser -s /bin/bash appuser
+
+WORKDIR /app
+
+COPY --from=build --chown=appuser:appgroup /usr/local/lib/python3.13 /usr/local/lib/python3.13
+COPY --from=build --chown=appuser:appgroup /usr/local/bin /usr/local/bin
+
+USER appuser
+
+CMD ["python", "moons.py"]
