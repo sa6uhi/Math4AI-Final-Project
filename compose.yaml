@@ -1,0 +1,10 @@
+services:
+  math4ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: math4ai
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    command: sh -c "python linear_gaussian.py && python moons_hidden_layer.py && python moons.py"
