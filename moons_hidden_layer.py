@@ -1,7 +1,7 @@
 import numpy as np
 
 
-with np.load(r'C:\Users\User\Downloads\moons.npz') as data:
+with np.load(r'data/moons.npz') as data:
     X_train = data['X_train']
     y_train=data['y_train']
 
