@@ -36,24 +36,32 @@ This project follows the Math4AI capstone framing:
 
 1. Clone repository and enter project root.
 
-    git clone git@github.com:sa6uhi/Math4AI-Final-Project.git
-    cd Math4AI-Final-Project
+```bash
+git clone git@github.com:sa6uhi/Math4AI-Final-Project.git
+cd Math4AI-Final-Project
+```
 
 2. Create and activate virtual environment.
 
-    python3 -m venv .venv
-    source .venv/bin/activate
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
 3. Install dependencies.
 
-    pip install -r requirements.txt
+```bash
+pip install -r requirements.txt
+```
 
 4. Run all four synthetic experiments.
 
-    python -m src.run_experiment --dataset linear_gaussian --model softmax
-    python -m src.run_experiment --dataset linear_gaussian --model hidden_layer
-    python -m src.run_experiment --dataset moons --model hidden_layer
-    python -m src.run_experiment --dataset moons --model softmax
+```bash
+python -m src.run_experiment --dataset linear_gaussian --model softmax
+python -m src.run_experiment --dataset linear_gaussian --model hidden_layer
+python -m src.run_experiment --dataset moons --model hidden_layer
+python -m src.run_experiment --dataset moons --model softmax
+```
 
 5. Check outputs.
 
@@ -64,17 +72,21 @@ This project follows the Math4AI capstone framing:
 
 Run one configuration at a time:
 
-    python -m src.run_experiment --dataset linear_gaussian --model softmax
-    python -m src.run_experiment --dataset linear_gaussian --model hidden_layer
-    python -m src.run_experiment --dataset moons --model softmax
-    python -m src.run_experiment --dataset moons --model hidden_layer
+```bash
+python -m src.run_experiment --dataset linear_gaussian --model softmax
+python -m src.run_experiment --dataset linear_gaussian --model hidden_layer
+python -m src.run_experiment --dataset moons --model softmax
+python -m src.run_experiment --dataset moons --model hidden_layer
+```
 
 ## Container Run (Docker compose)
 
 From project root:
 
-    docker compose -f container/compose.yaml up --build
-    docker compose -f container/compose.yaml down
+```bash
+docker compose -f container/compose.yaml up --build
+docker compose -f container/compose.yaml down
+```
 
 ## Reproducibility Notes
 
