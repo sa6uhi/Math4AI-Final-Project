@@ -1,90 +1,104 @@
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 
+SEED = 42
+np.random.seed(SEED)
 
-with np.load(r'../Starter-datasets-and-scripts/data/moons.npz') as data:
-    X_train = data['X_train']
-    y_train=data['y_train']
-
-    X_val=data['X_val']
-    y_val=data['y_val']
-
-    X_test=data['X_test']
-    y_test=data['y_test']
-
-#Consistent scaling
-mean=np.mean(X_train,axis=0)
-std=np.std(X_train,axis=0)
-
-X_train=(X_train-mean)/std
-X_val=(X_val-mean)/std
-X_test=(X_test-mean)/std
-
-n_samples=X_train.shape[0]
-input_dim=2
-hidden_dim=10
-output_dim=2
-lambda_reg=0.01
-
-#Xavier initialization for tanh
-W1=np.random.randn(input_dim,hidden_dim)*np.sqrt(1/input_dim)
-b1=np.zeros((1,hidden_dim))
-
-W2=np.random.randn(hidden_dim,output_dim)*np.sqrt(1/output_dim)
-b2=np.zeros((1,output_dim))
-
-print(f"Loaded {n_samples} samples.")
-
-#z1=np.dot(X_train,W1)+b1
-#h=np.tanh(z1)
-
-#logits=np.dot(h,W2)+b2
-#exp_logits=np.exp(logits-np.max(logits,axis=1,keepdims=True))
-#probabilities=exp_logits/np.sum(exp_logits,axis=1,keepdims=True)
-
-#dZ2=probabilities.copy()
-#dZ2[np.arange(n_samples),y_train]-=1
-#dZ2/=n_samples
-
-#dW2=np.dot(h.T,dZ2)+lambda_reg*W2
-#db2=np.sum(dZ2,axis=0,keepdims=True)
-
-#dh=np.dot(dZ2,W2.T)
-#dZ1=dh*(1-np.power(h,2))
-
-#dW1=np.dot(X_train.T,dZ1)+lambda_reg*W1
-#db1=np.sum(dZ1,axis=0,keepdims=True)
-
-eta=0.3 #Learning rate
-
-#W1-=eta*dW1
-#b1-=eta*db1
-#W2-=eta*dW2
-#b2-=eta*db2
-
-epochs=1200
+BASE_DIR = Path(__file__).resolve().parents[1]
+DATA_PATH = BASE_DIR / "Starter-datasets-and-scripts" / "data" / "moons.npz"
+RESULTS_DIR = BASE_DIR / "results"
+FIGURES_DIR = BASE_DIR / "figures"
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 
-##Step 7
+def softmax(logits: np.ndarray) -> np.ndarray:
+    exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+    return exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+
+
+def cross_entropy(probs: np.ndarray, y_true: np.ndarray) -> float:
+    correct_class_probs = probs[np.arange(y_true.shape[0]), y_true]
+    return -np.mean(np.log(correct_class_probs + 1e-15))
+
+
+def plot_decision_boundary(
+    X: np.ndarray,
+    y: np.ndarray,
+    W1: np.ndarray,
+    b1: np.ndarray,
+    W2: np.ndarray,
+    b2: np.ndarray,
+    out_path: Path,
+) -> None:
+    x_min, x_max = X[:, 0].min() - 1.0, X[:, 0].max() + 1.0
+    y_min, y_max = X[:, 1].min() - 1.0, X[:, 1].max() + 1.0
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 300), np.linspace(y_min, y_max, 300))
+    grid = np.c_[xx.ravel(), yy.ravel()]
+
+    z1 = np.dot(grid, W1) + b1
+    h = np.tanh(z1)
+    logits = np.dot(h, W2) + b2
+    probs = softmax(logits)
+    preds_grid = np.argmax(probs, axis=1).reshape(xx.shape)
+
+    plt.figure(figsize=(7, 6))
+    plt.contourf(xx, yy, preds_grid, levels=2, alpha=0.25, cmap="coolwarm")
+    plt.scatter(X[:, 0], X[:, 1], c=y, s=18, edgecolors="k", linewidths=0.2, cmap="coolwarm")
+    plt.title("Moons: 1-Hidden-Layer Decision Boundary")
+    plt.xlabel("x1 (standardized)")
+    plt.ylabel("x2 (standardized)")
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=150)
+    plt.close()
+
+
+with np.load(DATA_PATH) as data:
+    X_train = data["X_train"]
+    y_train = data["y_train"]
+    X_val = data["X_val"]
+    y_val = data["y_val"]
+    X_test = data["X_test"]
+    y_test = data["y_test"]
+
+mean = np.mean(X_train, axis=0)
+std = np.std(X_train, axis=0)
+std = np.where(std < 1e-12, 1.0, std)
+
+X_train = (X_train - mean) / std
+X_val = (X_val - mean) / std
+X_test = (X_test - mean) / std
+
+n_samples = X_train.shape[0]
+input_dim = X_train.shape[1]
+hidden_dim = 10
+output_dim = 2
+lambda_reg = 0.01
+
+W1 = np.random.randn(input_dim, hidden_dim) * np.sqrt(1.0 / input_dim)
+b1 = np.zeros((1, hidden_dim))
+
+W2 = np.random.randn(hidden_dim, output_dim) * np.sqrt(1.0 / hidden_dim)
+b2 = np.zeros((1, output_dim))
+
+eta = 0.3
+epochs = 1200
+
+history = []
 
 for epoch in range(epochs):
-    #Forward pass
-    #Layer 1
     z1 = np.dot(X_train, W1) + b1
     h = np.tanh(z1)
 
-    #Layer 2
     logits = np.dot(h, W2) + b2
-    exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
-    probabilities = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+    probabilities = softmax(logits)
 
-    #Loss
-    correct_class_probs=probabilities[np.arange(n_samples),y_train]
-    log_probs = np.log(correct_class_probs + 1e-15)
-    loss_reg=0.5*lambda_reg*(np.sum(np.square(W1))+np.sum(np.square(W2)))
-    loss = -np.mean(log_probs)+loss_reg
+    train_ce = cross_entropy(probabilities, y_train)
+    loss_reg = 0.5 * lambda_reg * (np.sum(np.square(W1)) + np.sum(np.square(W2)))
+    train_loss = train_ce + loss_reg
 
-    #Backpropogation
-    #Output layer gradient
     dZ2 = probabilities.copy()
     dZ2[np.arange(n_samples), y_train] -= 1
     dZ2 /= n_samples
@@ -92,52 +106,56 @@ for epoch in range(epochs):
     dW2 = np.dot(h.T, dZ2) + lambda_reg * W2
     db2 = np.sum(dZ2, axis=0, keepdims=True)
 
-    #Hidden layer gradient
     dh = np.dot(dZ2, W2.T)
     dZ1 = dh * (1 - np.power(h, 2))
 
     dW1 = np.dot(X_train.T, dZ1) + lambda_reg * W1
     db1 = np.sum(dZ1, axis=0, keepdims=True)
 
-    #Update parameters
     W1 -= eta * dW1
     b1 -= eta * db1
     W2 -= eta * dW2
     b2 -= eta * db2
 
+    z1_val = np.dot(X_val, W1) + b1
+    h_val = np.tanh(z1_val)
+    logits_val = np.dot(h_val, W2) + b2
+    probabilities_val = softmax(logits_val)
+
+    val_loss = cross_entropy(probabilities_val, y_val)
+    val_preds = np.argmax(probabilities_val, axis=1)
+    val_acc = np.mean(val_preds == y_val)
+    history.append([epoch, train_loss, val_loss, val_acc])
+
     if epoch % 100 == 0:
-        print(f"Epoch {epoch}: Loss {loss:.4f}")
-        #Forward pass validation
-        z1_val=np.dot(X_val,W1)+b1
-        h_val=np.tanh(z1_val)
-        logits_val=np.dot(h_val, W2) + b2
+        print(f"Epoch {epoch}: Train Loss {train_loss:.4f}, Val Loss {val_loss:.4f}, Val Acc {val_acc*100:.2f}%")
 
-        #Loss Validation
-        exp_val=np.exp(logits_val-np.max(logits_val,axis=1,keepdims=True))
-        probabilities_val=exp_val/np.sum(exp_val,axis=1,keepdims=True)
+z1_test = np.dot(X_test, W1) + b1
+h_test = np.tanh(z1_test)
+logits_test = np.dot(h_test, W2) + b2
+probabilities_test = softmax(logits_test)
 
-        correct_class_probs_val=probabilities_val[np.arange(X_val.shape[0]),y_val]
-        log_probs_val = np.log(correct_class_probs_val + 1e-15)
-        loss_val = -np.mean(log_probs_val)
+test_loss = cross_entropy(probabilities_test, y_test)
+preds_test = np.argmax(probabilities_test, axis=1)
+test_acc = np.mean(preds_test == y_test)
 
-        #Accuracy
-        preds_val=np.argmax(probabilities_val,axis=1)
-        accuracy=np.mean(np.equal(preds_val,y_val))
+metrics_path = RESULTS_DIR / "moons_hidden_layer_metrics.csv"
+np.savetxt(
+    metrics_path,
+    np.array(history),
+    delimiter=",",
+    header="epoch,train_loss,val_loss,val_accuracy",
+    comments="",
+)
 
-        print(f"Epoch {epoch}: Validation Loss {loss_val:.4f}, Accuracy {accuracy*100:.2f}%")
+plot_path = FIGURES_DIR / "moons_hidden_layer_boundary.png"
+plot_decision_boundary(X_test, y_test, W1, b1, W2, b2, plot_path)
 
-#Step 9 Testing
-z1_test=np.dot(X_test,W1)+b1
-h_test=np.tanh(z1_test)
-logits_test=np.dot(h_test,W2)+b2
-exp_test=np.exp(logits_test-np.max(logits_test,axis=1,keepdims=True))
-probabilities_test = exp_test / np.sum(exp_test, axis=1, keepdims=True)
-
-preds_test=np.argmax(probabilities_test,axis=1)
-accuracy_final=np.mean(np.equal(preds_test,y_test))
-
-print("-" * 30)
-print(f"FINAL TEST RESULTS")
-print(f"ACCURACY: {accuracy_final*100:.2f}%")
-print("-" * 30)
+print("-" * 40)
+print("FINAL TEST RESULTS (MOONS + 1-HIDDEN-LAYER)")
+print(f"Test Cross-Entropy: {test_loss:.4f}")
+print(f"Test Accuracy: {test_acc*100:.2f}%")
+print(f"Saved metrics: {metrics_path}")
+print(f"Saved figure: {plot_path}")
+print("-" * 40)
 
