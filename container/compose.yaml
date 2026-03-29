@@ -2,7 +2,7 @@ services:
   math4ai:
     build:
       context: ..
-      dockerfile: Container/Containerfile
+      dockerfile: container/Containerfile
     container_name: math4ai
     user: "0:0"
     environment:
@@ -11,4 +11,4 @@ services:
     volumes:
       - ..:/app
       - /app/__pycache__
-    command: sh -c "mkdir -p /app/results /app/figures && python Scripts/linear_gaussian.py && python Scripts/linear_gaussian_hidden_layer.py && python Scripts/moons_hidden_layer.py && python Scripts/moons.py"
+    command: sh -c "mkdir -p /app/results /app/figures && python scripts/linear_gaussian.py && python scripts/linear_gaussian_hidden_layer.py && python scripts/moons_hidden_layer.py && python scripts/moons.py"
