@@ -7,7 +7,7 @@ SEED = 42
 np.random.seed(SEED)
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_PATH = BASE_DIR / "Starter-datasets-and-scripts" / "data" / "linear_gaussian.npz"
+DATA_PATH = BASE_DIR / "raw_data_and_scripts" / "data" / "linear_gaussian.npz"
 RESULTS_DIR = BASE_DIR / "results"
 FIGURES_DIR = BASE_DIR / "figures"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
