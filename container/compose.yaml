@@ -11,4 +11,4 @@ services:
     volumes:
       - ..:/app
       - /app/__pycache__
-    command: sh -c "mkdir -p /app/results /app/figures && python scripts/linear_gaussian.py && python scripts/linear_gaussian_hidden_layer.py && python scripts/moons_hidden_layer.py && python scripts/moons.py"
+    command: sh -c "mkdir -p /app/results /app/figures && python -m src.run_experiment --dataset linear_gaussian --model softmax && python -m src.run_experiment --dataset linear_gaussian --model hidden_layer && python -m src.run_experiment --dataset moons --model hidden_layer && python -m src.run_experiment --dataset moons --model softmax"
