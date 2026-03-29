@@ -1,10 +1,14 @@
 services:
   math4ai:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: Container/Containerfile
     container_name: math4ai
+    user: "0:0"
+    environment:
+      - HOME=/tmp
+      - MPLCONFIGDIR=/tmp/matplotlib
     volumes:
-      - .:/app
+      - ..:/app
       - /app/__pycache__
-    command: sh -c "python linear_gaussian.py && python moons_hidden_layer.py && python moons.py"
+    command: sh -c "mkdir -p /app/results /app/figures && python Scripts/linear_gaussian.py && python Scripts/linear_gaussian_hidden_layer.py && python Scripts/moons_hidden_layer.py && python Scripts/moons.py"
