@@ -2,119 +2,96 @@ from typing import List, Tuple
 
 import numpy as np
 
-from .models import cross_entropy, softmax
+from .models import HiddenLayerClassifier, SoftmaxMath, SoftmaxRegressionClassifier
 
 
 History = List[List[float]]
 
 
-def train_softmax(
-    X_train: np.ndarray,
-    y_train: np.ndarray,
-    X_val: np.ndarray,
-    y_val: np.ndarray,
-    *,
-    epochs: int,
-    learning_rate: float,
-    lambda_reg: float,
-    seed: int,
-) -> Tuple[np.ndarray, np.ndarray, History]:
-    np.random.seed(seed)
-    n_samples = X_train.shape[0]
-    n_features = X_train.shape[1]
-    n_classes = int(np.max(y_train)) + 1
+class SoftmaxTrainer:
+    def __init__(self, epochs: int, learning_rate: float, lambda_reg: float) -> None:
+        self.epochs = epochs
+        self.learning_rate = learning_rate
+        self.lambda_reg = lambda_reg
 
-    W = np.random.randn(n_features, n_classes) * 0.1
-    b = np.zeros((1, n_classes))
-    history: History = []
+    def fit(
+        self,
+        model: SoftmaxRegressionClassifier,
+        X_train: np.ndarray,
+        y_train: np.ndarray,
+        X_val: np.ndarray,
+        y_val: np.ndarray,
+    ) -> History:
+        n_samples = X_train.shape[0]
+        history: History = []
 
-    for epoch in range(epochs):
-        logits = np.dot(X_train, W) + b
-        probs = softmax(logits)
+        for epoch in range(self.epochs):
+            probs = model.predict_proba(X_train)
+            train_ce = SoftmaxMath.cross_entropy(probs, y_train)
+            train_loss = train_ce + 0.5 * self.lambda_reg * np.sum(np.square(model.W))
 
-        train_ce = cross_entropy(probs, y_train)
-        train_loss = train_ce + 0.5 * lambda_reg * np.sum(np.square(W))
+            dZ = probs.copy()
+            dZ[np.arange(n_samples), y_train] -= 1
+            dZ /= n_samples
 
-        dZ = probs.copy()
-        dZ[np.arange(n_samples), y_train] -= 1
-        dZ /= n_samples
+            dW = np.dot(X_train.T, dZ) + self.lambda_reg * model.W
+            db = np.sum(dZ, axis=0, keepdims=True)
 
-        dW = np.dot(X_train.T, dZ) + lambda_reg * W
-        db = np.sum(dZ, axis=0, keepdims=True)
+            model.W -= self.learning_rate * dW
+            model.b -= self.learning_rate * db
 
-        W -= learning_rate * dW
-        b -= learning_rate * db
+            val_loss, val_acc = model.evaluate(X_val, y_val)
+            history.append([epoch, train_loss, val_loss, val_acc])
 
-        logits_val = np.dot(X_val, W) + b
-        probs_val = softmax(logits_val)
-        val_loss = cross_entropy(probs_val, y_val)
-        val_preds = np.argmax(probs_val, axis=1)
-        val_acc = np.mean(val_preds == y_val)
-        history.append([epoch, train_loss, val_loss, val_acc])
-
-    return W, b, history
+        return history
 
 
-def train_hidden_layer(
-    X_train: np.ndarray,
-    y_train: np.ndarray,
-    X_val: np.ndarray,
-    y_val: np.ndarray,
-    *,
-    hidden_dim: int,
-    epochs: int,
-    learning_rate: float,
-    lambda_reg: float,
-    seed: int,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, History]:
-    np.random.seed(seed)
-    n_samples = X_train.shape[0]
-    input_dim = X_train.shape[1]
-    output_dim = int(np.max(y_train)) + 1
+class HiddenLayerTrainer:
+    def __init__(self, epochs: int, learning_rate: float, lambda_reg: float) -> None:
+        self.epochs = epochs
+        self.learning_rate = learning_rate
+        self.lambda_reg = lambda_reg
 
-    W1 = np.random.randn(input_dim, hidden_dim) * np.sqrt(1.0 / input_dim)
-    b1 = np.zeros((1, hidden_dim))
-    W2 = np.random.randn(hidden_dim, output_dim) * np.sqrt(1.0 / hidden_dim)
-    b2 = np.zeros((1, output_dim))
+    def fit(
+        self,
+        model: HiddenLayerClassifier,
+        X_train: np.ndarray,
+        y_train: np.ndarray,
+        X_val: np.ndarray,
+        y_val: np.ndarray,
+    ) -> History:
+        n_samples = X_train.shape[0]
+        history: History = []
 
-    history: History = []
+        for epoch in range(self.epochs):
+            _, h, logits = model.forward(X_train)
+            probs = SoftmaxMath.softmax(logits)
 
-    for epoch in range(epochs):
-        z1 = np.dot(X_train, W1) + b1
-        h = np.tanh(z1)
+            train_ce = SoftmaxMath.cross_entropy(probs, y_train)
+            reg_term = 0.5 * self.lambda_reg * (
+                np.sum(np.square(model.W1)) + np.sum(np.square(model.W2))
+            )
+            train_loss = train_ce + reg_term
 
-        logits = np.dot(h, W2) + b2
-        probs = softmax(logits)
+            dZ2 = probs.copy()
+            dZ2[np.arange(n_samples), y_train] -= 1
+            dZ2 /= n_samples
 
-        train_ce = cross_entropy(probs, y_train)
-        reg_term = 0.5 * lambda_reg * (np.sum(np.square(W1)) + np.sum(np.square(W2)))
-        train_loss = train_ce + reg_term
+            dW2 = np.dot(h.T, dZ2) + self.lambda_reg * model.W2
+            db2 = np.sum(dZ2, axis=0, keepdims=True)
 
-        dZ2 = probs.copy()
-        dZ2[np.arange(n_samples), y_train] -= 1
-        dZ2 /= n_samples
+            dh = np.dot(dZ2, model.W2.T)
+            dZ1 = dh * (1 - np.power(h, 2))
 
-        dW2 = np.dot(h.T, dZ2) + lambda_reg * W2
-        db2 = np.sum(dZ2, axis=0, keepdims=True)
+            dW1 = np.dot(X_train.T, dZ1) + self.lambda_reg * model.W1
+            db1 = np.sum(dZ1, axis=0, keepdims=True)
 
-        dh = np.dot(dZ2, W2.T)
-        dZ1 = dh * (1 - np.power(h, 2))
+            model.W1 -= self.learning_rate * dW1
+            model.b1 -= self.learning_rate * db1
+            model.W2 -= self.learning_rate * dW2
+            model.b2 -= self.learning_rate * db2
 
-        dW1 = np.dot(X_train.T, dZ1) + lambda_reg * W1
-        db1 = np.sum(dZ1, axis=0, keepdims=True)
+            val_loss, val_acc = model.evaluate(X_val, y_val)
+            history.append([epoch, train_loss, val_loss, val_acc])
 
-        W1 -= learning_rate * dW1
-        b1 -= learning_rate * db1
-        W2 -= learning_rate * dW2
-        b2 -= learning_rate * db2
-
-        z1_val = np.dot(X_val, W1) + b1
-        h_val = np.tanh(z1_val)
-        logits_val = np.dot(h_val, W2) + b2
-        probs_val = softmax(logits_val)
-        val_loss = cross_entropy(probs_val, y_val)
-        val_preds = np.argmax(probs_val, axis=1)
-        val_acc = np.mean(val_preds == y_val)
-        history.append([epoch, train_loss, val_loss, val_acc])
-
-    return W1, b1, W2, b2, history
+        return history
