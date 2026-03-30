@@ -25,4 +25,4 @@ COPY --from=build --chown=appuser:appgroup /usr/local/bin /usr/local/bin
 
 USER appuser
 
-CMD ["python", "-m", "src.run_experiment", "--dataset", "moons", "--model", "softmax"]
+CMD ["python", "-m", "scripts.run_all_experiments"]
