@@ -1,16 +1,12 @@
 import argparse
+from typing import Dict
 
-from .data_utils import load_dataset, standardize_splits
-from .io_utils import save_history_csv
-from .models import (
-    evaluate_hidden_layer,
-    evaluate_softmax,
-    predict_hidden_layer,
-    predict_softmax,
-)
+from .data_utils import DataRepository
+from .io_utils import MetricsWriter
+from .models import HiddenLayerClassifier, SoftmaxRegressionClassifier
 from .paths import FIGURES_DIR, RESULTS_DIR, ensure_output_dirs
-from .plotting import plot_decision_boundary
-from .trainers import train_hidden_layer, train_softmax
+from .plotting import DecisionBoundaryPlotter
+from .trainers import HiddenLayerTrainer, SoftmaxTrainer
 
 SEED = 42
 
@@ -22,74 +18,88 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def get_hyperparams(dataset: str, model: str) -> dict:
-    if model == "softmax":
+class ExperimentRunner:
+    def __init__(self, seed: int = SEED) -> None:
+        self.seed = seed
+        self.data_repo = DataRepository()
+        self.metrics_writer = MetricsWriter()
+        self.plotter = DecisionBoundaryPlotter()
+
+    @staticmethod
+    def get_hyperparams(dataset: str, model: str) -> Dict[str, float]:
+        if model == "softmax":
+            return {
+                "epochs": 900 if dataset == "moons" else 200,
+                "learning_rate": 0.1,
+                "lambda_reg": 0.01,
+            }
+
         return {
-            "epochs": 900 if dataset == "moons" else 200,
-            "learning_rate": 0.1,
+            "hidden_dim": 10,
+            "epochs": 1200 if dataset == "moons" else 300,
+            "learning_rate": 0.3,
             "lambda_reg": 0.01,
         }
 
-    return {
-        "hidden_dim": 10,
-        "epochs": 1200 if dataset == "moons" else 300,
-        "learning_rate": 0.3,
-        "lambda_reg": 0.01,
-    }
+    def run(self, dataset: str, model_type: str) -> None:
+        ensure_output_dirs()
+
+        X_train, y_train, X_val, y_val, X_test, y_test = self.data_repo.load_dataset(dataset)
+        X_train, X_val, X_test = self.data_repo.standardize_splits(X_train, X_val, X_test)
+
+        hparams = self.get_hyperparams(dataset, model_type)
+
+        if model_type == "softmax":
+            model = SoftmaxRegressionClassifier(
+                input_dim=X_train.shape[1],
+                n_classes=int(y_train.max()) + 1,
+            )
+            model.initialize(self.seed)
+            trainer = SoftmaxTrainer(
+                epochs=int(hparams["epochs"]),
+                learning_rate=float(hparams["learning_rate"]),
+                lambda_reg=float(hparams["lambda_reg"]),
+            )
+            history = trainer.fit(model, X_train, y_train, X_val, y_val)
+            test_loss, test_acc = model.evaluate(X_test, y_test)
+            predict_fn = model.predict
+            title = f"{dataset.replace('_', ' ').title()}: Softmax Decision Boundary"
+        else:
+            model = HiddenLayerClassifier(
+                input_dim=X_train.shape[1],
+                hidden_dim=int(hparams["hidden_dim"]),
+                output_dim=int(y_train.max()) + 1,
+            )
+            model.initialize(self.seed)
+            trainer = HiddenLayerTrainer(
+                epochs=int(hparams["epochs"]),
+                learning_rate=float(hparams["learning_rate"]),
+                lambda_reg=float(hparams["lambda_reg"]),
+            )
+            history = trainer.fit(model, X_train, y_train, X_val, y_val)
+            test_loss, test_acc = model.evaluate(X_test, y_test)
+            predict_fn = model.predict
+            title = f"{dataset.replace('_', ' ').title()}: 1-Hidden-Layer Decision Boundary"
+
+        metrics_path = RESULTS_DIR / f"{dataset}_{model_type}_metrics.csv"
+        figure_path = FIGURES_DIR / f"{dataset}_{model_type}_boundary.png"
+
+        self.metrics_writer.save_history_csv(history, metrics_path)
+        self.plotter.plot_decision_boundary(X_test, y_test, predict_fn, figure_path, title)
+
+        print("-" * 40)
+        print(f"FINAL TEST RESULTS ({dataset.upper()} + {model_type.upper()})")
+        print(f"Test Cross-Entropy: {test_loss:.4f}")
+        print(f"Test Accuracy: {test_acc*100:.2f}%")
+        print(f"Saved metrics: {metrics_path}")
+        print(f"Saved figure: {figure_path}")
+        print("-" * 40)
 
 
 def main() -> None:
     args = parse_args()
-    ensure_output_dirs()
-
-    X_train, y_train, X_val, y_val, X_test, y_test = load_dataset(args.dataset)
-    X_train, X_val, X_test = standardize_splits(X_train, X_val, X_test)
-
-    hparams = get_hyperparams(args.dataset, args.model)
-
-    if args.model == "softmax":
-        W, b, history = train_softmax(
-            X_train,
-            y_train,
-            X_val,
-            y_val,
-            epochs=hparams["epochs"],
-            learning_rate=hparams["learning_rate"],
-            lambda_reg=hparams["lambda_reg"],
-            seed=SEED,
-        )
-        test_loss, test_acc = evaluate_softmax(X_test, y_test, W, b)
-        predict_fn = lambda X: predict_softmax(X, W, b)
-        title = f"{args.dataset.replace('_', ' ').title()}: Softmax Decision Boundary"
-    else:
-        W1, b1, W2, b2, history = train_hidden_layer(
-            X_train,
-            y_train,
-            X_val,
-            y_val,
-            hidden_dim=hparams["hidden_dim"],
-            epochs=hparams["epochs"],
-            learning_rate=hparams["learning_rate"],
-            lambda_reg=hparams["lambda_reg"],
-            seed=SEED,
-        )
-        test_loss, test_acc = evaluate_hidden_layer(X_test, y_test, W1, b1, W2, b2)
-        predict_fn = lambda X: predict_hidden_layer(X, W1, b1, W2, b2)
-        title = f"{args.dataset.replace('_', ' ').title()}: 1-Hidden-Layer Decision Boundary"
-
-    metrics_path = RESULTS_DIR / f"{args.dataset}_{args.model}_metrics.csv"
-    figure_path = FIGURES_DIR / f"{args.dataset}_{args.model}_boundary.png"
-
-    save_history_csv(history, metrics_path)
-    plot_decision_boundary(X_test, y_test, predict_fn, figure_path, title)
-
-    print("-" * 40)
-    print(f"FINAL TEST RESULTS ({args.dataset.upper()} + {args.model.upper()})")
-    print(f"Test Cross-Entropy: {test_loss:.4f}")
-    print(f"Test Accuracy: {test_acc*100:.2f}%")
-    print(f"Saved metrics: {metrics_path}")
-    print(f"Saved figure: {figure_path}")
-    print("-" * 40)
+    runner = ExperimentRunner(seed=SEED)
+    runner.run(args.dataset, args.model)
 
 
 if __name__ == "__main__":
