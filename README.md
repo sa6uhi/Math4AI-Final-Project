@@ -20,6 +20,7 @@ This project follows the Math4AI capstone framing:
 
 - data: provided datasets (linear_gaussian.npz, moons.npz, digits files)
 - src: implementation code (data loading, models, trainers, plotting, experiment runner)
+- scripts: runnable entry scripts that call `src` classes
 - results: generated per-epoch metrics CSV files
 - figures: generated decision-boundary figures
 - container: container setup (Containerfile and compose.yaml)
@@ -56,10 +57,7 @@ pip install -r requirements.txt
 4. Run all four synthetic experiments.
 
 ```bash
-python -m src.run_experiment --dataset linear_gaussian --model softmax
-python -m src.run_experiment --dataset linear_gaussian --model hidden_layer
-python -m src.run_experiment --dataset moons --model hidden_layer
-python -m src.run_experiment --dataset moons --model softmax
+python -m scripts.run_all_experiments
 ```
 
 5. Check outputs.
@@ -67,15 +65,15 @@ python -m src.run_experiment --dataset moons --model softmax
 - CSV metrics in results
 - decision-boundary figures in figures
 
-## Single Experiment Commands
+## Single Experiment Command
 
-Run one configuration at a time:
+Run one configuration when needed:
 
 ```bash
-python -m src.run_experiment --dataset linear_gaussian --model softmax
-python -m src.run_experiment --dataset linear_gaussian --model hidden_layer
-python -m src.run_experiment --dataset moons --model softmax
-python -m src.run_experiment --dataset moons --model hidden_layer
+python -m scripts.run_experiment --dataset linear_gaussian --model softmax
+python -m scripts.run_experiment --dataset linear_gaussian --model hidden_layer
+python -m scripts.run_experiment --dataset moons --model softmax
+python -m scripts.run_experiment --dataset moons --model hidden_layer
 ```
 
 ## Container Run (Docker compose)
@@ -118,3 +116,4 @@ Figures:
 - If matplotlib cache warnings appear in containers, compose already sets writable HOME and MPLCONFIGDIR.
 - If permissions fail on mounted outputs, run compose as configured in container/compose.yaml.
 - If module import fails for src, make sure you run commands from project root.
+- If `compose up` appears to print repeated experiment blocks, you are seeing accumulated logs from the same stopped container. Use `docker compose -f container/compose.yaml down -v && docker compose -f container/compose.yaml up --build` for a fresh run.
