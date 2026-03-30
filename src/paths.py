@@ -1,7 +1,7 @@
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_DIR = BASE_DIR / "raw_data_and_scripts" / "data"
+DATA_DIR = BASE_DIR / "data"
 RESULTS_DIR = BASE_DIR / "results"
 FIGURES_DIR = BASE_DIR / "figures"
 

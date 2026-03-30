@@ -18,8 +18,7 @@ This project follows the Math4AI capstone framing:
 
 ## Repository Structure
 
-- raw_data_and_scripts/data: provided datasets (linear_gaussian.npz, moons.npz, digits files)
-- raw_data_and_scripts/scripts: deterministic data utilities from starter pack
+- data: provided datasets (linear_gaussian.npz, moons.npz, digits files)
 - src: implementation code (data loading, models, trainers, plotting, experiment runner)
 - results: generated per-epoch metrics CSV files
 - figures: generated decision-boundary figures
