@@ -7,13 +7,21 @@ from typing import Dict, List
 import numpy as np
 
 from .config import (
+    ADAM_BETA1,
+    ADAM_BETA2,
+    ADAM_EPSILON,
     CLI_RUN_DESCRIPTION,
     DATASET_CHOICES,
     DEFAULT_SEED,
     FIGURE_FILE_TEMPLATE,
+    HIDDEN_OPTIMIZER_DEFAULT,
     METRICS_FILE_TEMPLATE,
     MODEL_CHOICES,
     NORMAL_Z_95,
+    MOMENTUM_BETA,
+    OPTIMIZER_ABLATION_FILE_TEMPLATE,
+    OPTIMIZER_ABLATION_HEADER,
+    OPTIMIZER_CHOICES,
     OUTPUT_SEPARATOR,
     FIGURES_DIR,
     RESULTS_DIR,
@@ -35,8 +43,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=CLI_RUN_DESCRIPTION)
     parser.add_argument("--dataset", choices=DATASET_CHOICES, required=True)
     parser.add_argument("--model", choices=MODEL_CHOICES, required=True)
+    parser.add_argument("--optimizer", choices=OPTIMIZER_CHOICES, default=HIDDEN_OPTIMIZER_DEFAULT)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--repeat-seeds", type=str, default=REPEAT_SEEDS_DEFAULT)
+    parser.add_argument("--ablate-hidden-optimizers", action="store_true")
     return parser.parse_args()
 
 
@@ -82,7 +92,21 @@ class ExperimentRunner:
             "ci_high": mean + margin,
         }
 
-    def run(self, dataset: str, model_type: str, seed: int | None = None) -> Dict[str, float | Path]:
+    @staticmethod
+    def _model_label(model_type: str, optimizer: str | None = None) -> str:
+        """Return model label used for output filenames."""
+        if model_type == "hidden_layer":
+            hidden_optimizer = optimizer or HIDDEN_OPTIMIZER_DEFAULT
+            return f"{model_type}_{hidden_optimizer}"
+        return model_type
+
+    def run(
+        self,
+        dataset: str,
+        model_type: str,
+        seed: int | None = None,
+        optimizer: str | None = None,
+    ) -> Dict[str, float | Path]:
         """Run a single dataset/model experiment and write output artifacts."""
         ensure_output_dirs()
 
@@ -95,6 +119,8 @@ class ExperimentRunner:
             X_train, X_val, X_test = self.data_repo.standardize_splits(X_train, X_val, X_test)
 
         hparams = self.get_hyperparams(dataset, model_type)
+        hidden_optimizer = optimizer or HIDDEN_OPTIMIZER_DEFAULT
+        model_label = self._model_label(model_type, hidden_optimizer)
 
         if model_type == "softmax":
             model = SoftmaxRegressionClassifier(
@@ -126,20 +152,28 @@ class ExperimentRunner:
                 lambda_reg=float(hparams["lambda_reg"]),
                 batch_size=int(hparams["batch_size"]),
                 seed=seed_to_use,
+                optimizer=hidden_optimizer,
+                momentum_beta=MOMENTUM_BETA,
+                adam_beta1=ADAM_BETA1,
+                adam_beta2=ADAM_BETA2,
+                adam_epsilon=ADAM_EPSILON,
             )
             history = trainer.fit(model, X_train, y_train, X_val, y_val)
             test_loss, test_acc = model.evaluate(X_test, y_test)
             predict_fn = model.predict
-            title = f"{dataset.replace('_', ' ').title()}: 1-Hidden-Layer Decision Boundary"
+            title = (
+                f"{dataset.replace('_', ' ').title()}: "
+                f"1-Hidden-Layer Decision Boundary ({hidden_optimizer.upper()})"
+            )
 
         metrics_path = RESULTS_DIR / METRICS_FILE_TEMPLATE.format(
             dataset=dataset,
-            model_type=model_type,
+            model_type=model_label,
             seed=seed_to_use,
         )
         figure_path = FIGURES_DIR / FIGURE_FILE_TEMPLATE.format(
             dataset=dataset,
-            model_type=model_type,
+            model_type=model_label,
             seed=seed_to_use,
         )
 
@@ -148,7 +182,13 @@ class ExperimentRunner:
             self.plotter.plot_decision_boundary(X_test, y_test, predict_fn, figure_path, title)
 
         print(OUTPUT_SEPARATOR)
-        print(f"FINAL TEST RESULTS ({dataset.upper()} + {model_type.upper()} + seed={seed_to_use})")
+        if model_type == "hidden_layer":
+            print(
+                "FINAL TEST RESULTS "
+                f"({dataset.upper()} + {model_type.upper()} + {hidden_optimizer.upper()} + seed={seed_to_use})"
+            )
+        else:
+            print(f"FINAL TEST RESULTS ({dataset.upper()} + {model_type.upper()} + seed={seed_to_use})")
         print(f"Test Cross-Entropy: {test_loss:.4f}")
         print(f"Test Accuracy: {test_acc*100:.2f}%")
         print(f"Saved metrics: {metrics_path}")
@@ -159,6 +199,7 @@ class ExperimentRunner:
         return {
             "dataset": dataset,
             "model": model_type,
+            "optimizer": hidden_optimizer if model_type == "hidden_layer" else "na",
             "seed": seed_to_use,
             "test_loss": float(test_loss),
             "test_accuracy": float(test_acc),
@@ -166,14 +207,22 @@ class ExperimentRunner:
             "figure_path": figure_path,
         }
 
-    def run_repeated_seeds(self, dataset: str, model_type: str, seeds: List[int]) -> Path:
+    def run_repeated_seeds(
+        self,
+        dataset: str,
+        model_type: str,
+        seeds: List[int],
+        optimizer: str | None = None,
+    ) -> Path:
         """Run multiple seeds and save aggregate metrics with 95% CI bounds."""
         rows = []
         losses = []
         accuracies = []
+        hidden_optimizer = optimizer or HIDDEN_OPTIMIZER_DEFAULT
+        model_label = self._model_label(model_type, hidden_optimizer)
 
         for seed in seeds:
-            out = self.run(dataset=dataset, model_type=model_type, seed=seed)
+            out = self.run(dataset=dataset, model_type=model_type, seed=seed, optimizer=hidden_optimizer)
             losses.append(float(out["test_loss"]))
             accuracies.append(float(out["test_accuracy"]))
 
@@ -199,7 +248,7 @@ class ExperimentRunner:
 
         out_path = RESULTS_DIR / REPEATED_SUMMARY_FILE_TEMPLATE.format(
             dataset=dataset,
-            model_type=model_type,
+            model_type=model_label,
         )
         np.savetxt(
             out_path,
@@ -213,17 +262,45 @@ class ExperimentRunner:
         print(f"Saved repeated-seed summary: {out_path}")
         return out_path
 
+    def run_hidden_optimizer_ablation(self, dataset: str, seed: int) -> Path:
+        """Run hidden-layer experiments for SGD/Momentum/Adam and save a comparison CSV."""
+        rows = []
+        for optimizer in OPTIMIZER_CHOICES:
+            out = self.run(
+                dataset=dataset,
+                model_type="hidden_layer",
+                seed=seed,
+                optimizer=optimizer,
+            )
+            rows.append([optimizer, out["test_loss"], out["test_accuracy"]])
+
+        out_path = RESULTS_DIR / OPTIMIZER_ABLATION_FILE_TEMPLATE.format(dataset=dataset, seed=seed)
+        np.savetxt(
+            out_path,
+            np.array(rows, dtype=object),
+            delimiter=",",
+            header=OPTIMIZER_ABLATION_HEADER,
+            comments="",
+            fmt="%s",
+        )
+        print(f"Saved optimizer ablation summary: {out_path}")
+        return out_path
+
 
 def main() -> None:
     args = parse_args()
     runner = ExperimentRunner(seed=args.seed)
 
-    if args.repeat_seeds:
-        seeds = parse_seed_list(args.repeat_seeds)
-        runner.run_repeated_seeds(args.dataset, args.model, seeds)
+    if args.ablate_hidden_optimizers:
+        runner.run_hidden_optimizer_ablation(dataset=args.dataset, seed=args.seed)
         return
 
-    runner.run(args.dataset, args.model, seed=args.seed)
+    if args.repeat_seeds:
+        seeds = parse_seed_list(args.repeat_seeds)
+        runner.run_repeated_seeds(args.dataset, args.model, seeds, optimizer=args.optimizer)
+        return
+
+    runner.run(args.dataset, args.model, seed=args.seed, optimizer=args.optimizer)
 
 
 if __name__ == "__main__":

@@ -25,6 +25,8 @@ def ensure_output_dirs() -> None:
 DEFAULT_SEED: Final[int] = 42
 DATASET_CHOICES: Final[Tuple[str, ...]] = ("moons", "linear_gaussian", "digits")
 MODEL_CHOICES: Final[Tuple[str, ...]] = ("softmax", "hidden_layer")
+OPTIMIZER_CHOICES: Final[Tuple[str, ...]] = ("sgd", "momentum", "adam")
+HIDDEN_OPTIMIZER_DEFAULT: Final[str] = "sgd"
 CLI_RUN_DESCRIPTION: Final[str] = "Run one Math4AI synthetic experiment."
 
 REPEAT_SEEDS_DEFAULT: Final[str] = ""
@@ -36,8 +38,15 @@ REPEATED_SEED_SUMMARY_HEADER: Final[str] = "metric,mean,std,ci_low,ci_high,n"
 METRICS_FILE_TEMPLATE: Final[str] = "{dataset}_{model_type}_seed{seed}_metrics.csv"
 FIGURE_FILE_TEMPLATE: Final[str] = "{dataset}_{model_type}_seed{seed}_boundary.png"
 REPEATED_SUMMARY_FILE_TEMPLATE: Final[str] = "{dataset}_{model_type}_repeated_seed_summary.csv"
+OPTIMIZER_ABLATION_FILE_TEMPLATE: Final[str] = "{dataset}_hidden_layer_optimizer_ablation_seed{seed}.csv"
+OPTIMIZER_ABLATION_HEADER: Final[str] = "optimizer,test_cross_entropy,test_accuracy"
 
 OUTPUT_SEPARATOR: Final[str] = "-" * 40
+
+MOMENTUM_BETA: Final[float] = 0.9
+ADAM_BETA1: Final[float] = 0.9
+ADAM_BETA2: Final[float] = 0.999
+ADAM_EPSILON: Final[float] = 1e-8
 
 DEFAULT_BATCH_RUNS: Final[Tuple[Tuple[str, str], ...]] = (
     ("linear_gaussian", "softmax"),

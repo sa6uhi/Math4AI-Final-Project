@@ -32,10 +32,19 @@ Run one seeded digits experiment:
 
 ```bash
 python -m src.run_experiment --dataset digits --model softmax --seed 42
+python -m src.run_experiment --dataset digits --model hidden_layer --optimizer adam --seed 42
 ```
 
 Run repeated seeds and generate CI summary:
 
 ```bash
 python -m src.run_experiment --dataset linear_gaussian --model softmax --repeat-seeds "42,43,44,45,46"
+python -m src.run_experiment --dataset digits --model softmax --repeat-seeds "42,43,44,45,46"
+python -m src.run_experiment --dataset digits --model hidden_layer --optimizer adam --repeat-seeds "42,43,44,45,46"
+```
+
+Run hidden-layer optimizer ablation:
+
+```bash
+python -m src.run_experiment --dataset digits --model hidden_layer --ablate-hidden-optimizers --seed 42
 ```

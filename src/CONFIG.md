@@ -15,6 +15,8 @@ This document describes every configuration variable in `src/config.py` and why 
 - `DEFAULT_SEED`: Canonical seed for deterministic experiments.
 - `DATASET_CHOICES`: Allowed dataset names for CLI validation.
 - `MODEL_CHOICES`: Allowed model names for CLI validation.
+- `OPTIMIZER_CHOICES`: Allowed hidden-layer optimizer values (`sgd`, `momentum`, `adam`).
+- `HIDDEN_OPTIMIZER_DEFAULT`: Default optimizer used when hidden-layer optimizer is not explicitly set.
 - `CLI_RUN_DESCRIPTION`: Shared CLI description text for script and module entrypoints.
 - `REPEAT_SEEDS_DEFAULT`: Default empty repeated-seed argument.
 - `SEED_LIST_DELIMITER`: Delimiter used by `parse_seed_list`.
@@ -27,7 +29,16 @@ This document describes every configuration variable in `src/config.py` and why 
 - `METRICS_FILE_TEMPLATE`: Naming pattern for per-seed metrics output.
 - `FIGURE_FILE_TEMPLATE`: Naming pattern for per-seed figure output.
 - `REPEATED_SUMMARY_FILE_TEMPLATE`: Naming pattern for repeated-seed summary output.
+- `OPTIMIZER_ABLATION_FILE_TEMPLATE`: Naming pattern for hidden-layer optimizer ablation CSV output.
+- `OPTIMIZER_ABLATION_HEADER`: CSV header for optimizer ablation output.
 - `OUTPUT_SEPARATOR`: Shared text separator for console output blocks.
+
+## Optimizer parameters
+
+- `MOMENTUM_BETA`: Exponential decay factor for momentum velocity.
+- `ADAM_BETA1`: First-moment decay for Adam.
+- `ADAM_BETA2`: Second-moment decay for Adam.
+- `ADAM_EPSILON`: Numerical-stability epsilon for Adam denominator.
 
 ## Batch run defaults
 
