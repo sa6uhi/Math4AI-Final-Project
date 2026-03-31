@@ -83,7 +83,11 @@ python -m scripts.run_experiment --dataset linear_gaussian --model hidden_layer
 python -m scripts.run_experiment --dataset moons --model softmax
 python -m scripts.run_experiment --dataset moons --model hidden_layer
 python -m scripts.run_experiment --dataset digits --model softmax --seed 42
+python -m scripts.run_experiment --dataset digits --model hidden_layer --optimizer adam --seed 42
 python -m scripts.run_experiment --dataset linear_gaussian --model softmax --repeat-seeds "42,43,44,45,46"
+python -m scripts.run_experiment --dataset digits --model softmax --repeat-seeds "42,43,44,45,46"
+python -m scripts.run_experiment --dataset digits --model hidden_layer --optimizer adam --repeat-seeds "42,43,44,45,46"
+python -m scripts.run_experiment --dataset digits --model hidden_layer --ablate-hidden-optimizers --seed 42
 ```
 
 ## Container Run
@@ -124,7 +128,11 @@ Metrics:
 - results/moons_softmax_seed42_metrics.csv
 - results/moons_hidden_layer_seed42_metrics.csv
 - results/digits_softmax_seed42_metrics.csv
+- results/digits_hidden_layer_adam_seed42_metrics.csv
 - results/linear_gaussian_softmax_repeated_seed_summary.csv
+- results/digits_softmax_repeated_seed_summary.csv
+- results/digits_hidden_layer_adam_repeated_seed_summary.csv
+- results/digits_hidden_layer_optimizer_ablation_seed42.csv
 
 Figures:
 
