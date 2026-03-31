@@ -1,105 +1,58 @@
+"""Experiment orchestration for single runs and repeated-seed summaries."""
+
 import argparse
 from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
 
+from .config import (
+    CLI_RUN_DESCRIPTION,
+    DATASET_CHOICES,
+    DEFAULT_SEED,
+    FIGURE_FILE_TEMPLATE,
+    METRICS_FILE_TEMPLATE,
+    MODEL_CHOICES,
+    NORMAL_Z_95,
+    OUTPUT_SEPARATOR,
+    FIGURES_DIR,
+    RESULTS_DIR,
+    REPEATED_SEED_SUMMARY_HEADER,
+    REPEATED_SUMMARY_FILE_TEMPLATE,
+    REPEAT_SEEDS_DEFAULT,
+    ensure_output_dirs,
+    parse_seed_list,
+    T_CRIT_95,
+    get_hyperparams_config,
+)
 from .data_utils import DataRepository
 from .io_utils import MetricsWriter
 from .models import HiddenLayerClassifier, SoftmaxRegressionClassifier
-from .paths import FIGURES_DIR, RESULTS_DIR, ensure_output_dirs
 from .plotting import DecisionBoundaryPlotter
 from .trainers import HiddenLayerTrainer, SoftmaxTrainer
 
-SEED = 42
-
-# Two-sided 95% t critical values for df=1..30.
-_T_CRIT_95 = {
-    1: 12.706,
-    2: 4.303,
-    3: 3.182,
-    4: 2.776,
-    5: 2.571,
-    6: 2.447,
-    7: 2.365,
-    8: 2.306,
-    9: 2.262,
-    10: 2.228,
-    11: 2.201,
-    12: 2.179,
-    13: 2.160,
-    14: 2.145,
-    15: 2.131,
-    16: 2.120,
-    17: 2.110,
-    18: 2.101,
-    19: 2.093,
-    20: 2.086,
-    21: 2.080,
-    22: 2.074,
-    23: 2.069,
-    24: 2.064,
-    25: 2.060,
-    26: 2.056,
-    27: 2.052,
-    28: 2.048,
-    29: 2.045,
-    30: 2.042,
-}
-
-
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run one Math4AI synthetic experiment.")
-    parser.add_argument("--dataset", choices=["moons", "linear_gaussian", "digits"], required=True)
-    parser.add_argument("--model", choices=["softmax", "hidden_layer"], required=True)
-    parser.add_argument("--seed", type=int, default=SEED)
-    parser.add_argument("--repeat-seeds", type=str, default="")
+    parser = argparse.ArgumentParser(description=CLI_RUN_DESCRIPTION)
+    parser.add_argument("--dataset", choices=DATASET_CHOICES, required=True)
+    parser.add_argument("--model", choices=MODEL_CHOICES, required=True)
+    parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    parser.add_argument("--repeat-seeds", type=str, default=REPEAT_SEEDS_DEFAULT)
     return parser.parse_args()
 
 
 class ExperimentRunner:
     """Run one experiment configuration and persist metrics/figures."""
 
-    def __init__(self, seed: int = SEED) -> None:
+    def __init__(self, seed: int = DEFAULT_SEED) -> None:
         self.seed = seed
         self.data_repo = DataRepository()
         self.metrics_writer = MetricsWriter()
         self.plotter = DecisionBoundaryPlotter()
 
     @staticmethod
-    def get_hyperparams(dataset: str, model: str) -> Dict[str, float]:
+    def get_hyperparams(dataset: str, model: str) -> Dict[str, float | int]:
         """Return default hyperparameters for a dataset/model pair."""
-        if dataset == "digits":
-            if model == "softmax":
-                return {
-                    "epochs": 200,
-                    "learning_rate": 0.05,
-                    "lambda_reg": 1e-4,
-                    "batch_size": 64,
-                }
-            return {
-                "hidden_dim": 32,
-                "epochs": 200,
-                "learning_rate": 0.05,
-                "lambda_reg": 1e-4,
-                "batch_size": 64,
-            }
-
-        if model == "softmax":
-            return {
-                "epochs": 900 if dataset == "moons" else 200,
-                "learning_rate": 0.1,
-                "lambda_reg": 0.01,
-                "batch_size": 256,
-            }
-
-        return {
-            "hidden_dim": 10,
-            "epochs": 1200 if dataset == "moons" else 300,
-            "learning_rate": 0.3,
-            "lambda_reg": 0.01,
-            "batch_size": 256,
-        }
+        return get_hyperparams_config(dataset, model)
 
     @staticmethod
     def _ci95(values: List[float]) -> Dict[str, float]:
@@ -120,7 +73,7 @@ class ExperimentRunner:
 
         std = float(np.std(arr, ddof=1))
         df = arr.size - 1
-        t_critical = _T_CRIT_95.get(df, 1.96)
+        t_critical = T_CRIT_95.get(df, NORMAL_Z_95)
         margin = t_critical * std / np.sqrt(arr.size)
         return {
             "mean": mean,
@@ -179,21 +132,29 @@ class ExperimentRunner:
             predict_fn = model.predict
             title = f"{dataset.replace('_', ' ').title()}: 1-Hidden-Layer Decision Boundary"
 
-        metrics_path = RESULTS_DIR / f"{dataset}_{model_type}_seed{seed_to_use}_metrics.csv"
-        figure_path = FIGURES_DIR / f"{dataset}_{model_type}_seed{seed_to_use}_boundary.png"
+        metrics_path = RESULTS_DIR / METRICS_FILE_TEMPLATE.format(
+            dataset=dataset,
+            model_type=model_type,
+            seed=seed_to_use,
+        )
+        figure_path = FIGURES_DIR / FIGURE_FILE_TEMPLATE.format(
+            dataset=dataset,
+            model_type=model_type,
+            seed=seed_to_use,
+        )
 
         self.metrics_writer.save_history_csv(history, metrics_path)
         if X_test.shape[1] == 2:
             self.plotter.plot_decision_boundary(X_test, y_test, predict_fn, figure_path, title)
 
-        print("-" * 40)
+        print(OUTPUT_SEPARATOR)
         print(f"FINAL TEST RESULTS ({dataset.upper()} + {model_type.upper()} + seed={seed_to_use})")
         print(f"Test Cross-Entropy: {test_loss:.4f}")
         print(f"Test Accuracy: {test_acc*100:.2f}%")
         print(f"Saved metrics: {metrics_path}")
         if X_test.shape[1] == 2:
             print(f"Saved figure: {figure_path}")
-        print("-" * 40)
+        print(OUTPUT_SEPARATOR)
 
         return {
             "dataset": dataset,
@@ -236,12 +197,15 @@ class ExperimentRunner:
             len(seeds),
         ])
 
-        out_path = RESULTS_DIR / f"{dataset}_{model_type}_repeated_seed_summary.csv"
+        out_path = RESULTS_DIR / REPEATED_SUMMARY_FILE_TEMPLATE.format(
+            dataset=dataset,
+            model_type=model_type,
+        )
         np.savetxt(
             out_path,
             np.array(rows, dtype=object),
             delimiter=",",
-            header="metric,mean,std,ci_low,ci_high,n",
+            header=REPEATED_SEED_SUMMARY_HEADER,
             comments="",
             fmt="%s",
         )
@@ -255,7 +219,7 @@ def main() -> None:
     runner = ExperimentRunner(seed=args.seed)
 
     if args.repeat_seeds:
-        seeds = [int(item.strip()) for item in args.repeat_seeds.split(",") if item.strip()]
+        seeds = parse_seed_list(args.repeat_seeds)
         runner.run_repeated_seeds(args.dataset, args.model, seeds)
         return
 
