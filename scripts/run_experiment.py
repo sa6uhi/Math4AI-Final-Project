@@ -17,7 +17,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=CLI_RUN_DESCRIPTION)
     parser.add_argument("--dataset", choices=DATASET_CHOICES, required=True)
     parser.add_argument("--model", choices=MODEL_CHOICES, required=True)
-    parser.add_argument("--optimizer", choices=OPTIMIZER_CHOICES, default=HIDDEN_OPTIMIZER_DEFAULT)
+    parser.add_argument("--optimizer", choices=OPTIMIZER_CHOICES, default=None)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--repeat-seeds", type=str, default=REPEAT_SEEDS_DEFAULT)
     parser.add_argument("--ablate-hidden-optimizers", action="store_true")
@@ -29,6 +29,10 @@ def main() -> None:
     runner = ExperimentRunner(seed=args.seed)
 
     if args.ablate_hidden_optimizers:
+        if args.model != "hidden_layer":
+            raise SystemExit(
+                f"--ablate-hidden-optimizers can only be used with --model hidden_layer; got {args.model!r}."
+            )
         runner.run_hidden_optimizer_ablation(dataset=args.dataset, seed=args.seed)
         return
 
