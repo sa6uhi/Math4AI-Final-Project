@@ -1,3 +1,5 @@
+"""Model definitions and softmax math primitives for classification."""
+
 from typing import Tuple
 
 import numpy as np

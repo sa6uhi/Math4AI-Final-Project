@@ -1,8 +1,10 @@
+"""Dataset loading and preprocessing helpers for experiment pipelines."""
+
 from typing import Tuple
 
 import numpy as np
 
-from .paths import DATA_DIR
+from .config import DATA_DIR
 
 
 DatasetSplits = Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
