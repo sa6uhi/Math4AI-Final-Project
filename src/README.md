@@ -4,6 +4,7 @@ Implementation code for Math4AI experiments.
 
 ## Modules
 
+- `config.py`: centralized defaults, paths, output templates, and hyperparameter map
 - `data_utils.py`: `DataRepository` for dataset loading and standardization
 - `models.py`: `SoftmaxRegressionClassifier` and `HiddenLayerClassifier`
 - `trainers.py`: `SoftmaxTrainer` and `HiddenLayerTrainer`
@@ -15,12 +16,13 @@ Implementation code for Math4AI experiments.
 
 - Synthetic datasets (`moons`, `linear_gaussian`) are standardized using train-set statistics.
 - Digits uses the fixed split indices provided in starter data.
+- Config definitions and rationale are documented in `CONFIG.md`.
 - Repeated-seed summaries are written as CSV with columns:
 	`metric,mean,std,ci_low,ci_high,n`
 
 ## Example usage
 
-Run one seeded synthetic experiment:
+Run one seeded synthetic experiment from module entrypoint:
 
 ```bash
 python -m src.run_experiment --dataset linear_gaussian --model softmax --seed 42
