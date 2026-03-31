@@ -1,7 +1,11 @@
+"""Input/output helpers for writing experiment metrics artifacts."""
+
 from pathlib import Path
 from typing import List
 
 import numpy as np
+
+from .config import METRICS_HISTORY_HEADER
 
 
 History = List[List[float]]
@@ -17,6 +21,6 @@ class MetricsWriter:
             out_path,
             np.array(history),
             delimiter=",",
-            header="epoch,train_loss,val_loss,val_accuracy",
+            header=METRICS_HISTORY_HEADER,
             comments="",
         )
