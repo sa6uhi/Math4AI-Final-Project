@@ -43,7 +43,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=CLI_RUN_DESCRIPTION)
     parser.add_argument("--dataset", choices=DATASET_CHOICES, required=True)
     parser.add_argument("--model", choices=MODEL_CHOICES, required=True)
-    parser.add_argument("--optimizer", choices=OPTIMIZER_CHOICES, default=HIDDEN_OPTIMIZER_DEFAULT)
+    parser.add_argument("--optimizer", choices=OPTIMIZER_CHOICES, default=None)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--repeat-seeds", type=str, default=REPEAT_SEEDS_DEFAULT)
     parser.add_argument("--ablate-hidden-optimizers", action="store_true")
@@ -96,8 +96,9 @@ class ExperimentRunner:
     def _model_label(model_type: str, optimizer: str | None = None) -> str:
         """Return model label used for output filenames."""
         if model_type == "hidden_layer":
-            hidden_optimizer = optimizer or HIDDEN_OPTIMIZER_DEFAULT
-            return f"{model_type}_{hidden_optimizer}"
+            if optimizer is None or optimizer == HIDDEN_OPTIMIZER_DEFAULT:
+                return model_type
+            return f"{model_type}_{optimizer}"
         return model_type
 
     def run(
@@ -120,7 +121,7 @@ class ExperimentRunner:
 
         hparams = self.get_hyperparams(dataset, model_type)
         hidden_optimizer = optimizer or HIDDEN_OPTIMIZER_DEFAULT
-        model_label = self._model_label(model_type, hidden_optimizer)
+        model_label = self._model_label(model_type, optimizer)
 
         if model_type == "softmax":
             model = SoftmaxRegressionClassifier(
@@ -219,7 +220,7 @@ class ExperimentRunner:
         losses = []
         accuracies = []
         hidden_optimizer = optimizer or HIDDEN_OPTIMIZER_DEFAULT
-        model_label = self._model_label(model_type, hidden_optimizer)
+        model_label = self._model_label(model_type, optimizer)
 
         for seed in seeds:
             out = self.run(dataset=dataset, model_type=model_type, seed=seed, optimizer=hidden_optimizer)
@@ -292,6 +293,10 @@ def main() -> None:
     runner = ExperimentRunner(seed=args.seed)
 
     if args.ablate_hidden_optimizers:
+        if args.model != "hidden_layer":
+            raise SystemExit(
+                f"--ablate-hidden-optimizers can only be used with --model hidden_layer; got {args.model!r}."
+            )
         runner.run_hidden_optimizer_ablation(dataset=args.dataset, seed=args.seed)
         return
 
