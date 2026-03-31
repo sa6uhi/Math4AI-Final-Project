@@ -10,4 +10,4 @@ Generated plots from experiment runs.
 
 - Decision boundary figures are generated only for 2D feature datasets.
 - Digits experiments do not produce boundary plots because inputs are high-dimensional.
-- Regenerate figures by rerunning the corresponding command in `scripts/run_experiment.py`.
+- Regenerate figures by rerunning the corresponding `python -m scripts.run_experiment ...` command.
