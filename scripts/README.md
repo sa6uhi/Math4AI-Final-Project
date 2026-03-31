@@ -12,17 +12,23 @@ Command-line entry points for running experiments.
 Run one synthetic experiment:
 
 ```bash
-python scripts/run_experiment.py --dataset linear_gaussian --model softmax --seed 42
+python -m scripts.run_experiment --dataset linear_gaussian --model softmax --seed 42
 ```
 
 Run one digits experiment:
 
 ```bash
-python scripts/run_experiment.py --dataset digits --model softmax --seed 42
+python -m scripts.run_experiment --dataset digits --model softmax --seed 42
 ```
 
 Run repeated seeds and write summary CSV:
 
 ```bash
-python scripts/run_experiment.py --dataset linear_gaussian --model softmax --repeat-seeds "42,43,44,45,46"
+python -m scripts.run_experiment --dataset linear_gaussian --model softmax --repeat-seeds "42,43,44,45,46"
+```
+
+Run the default synthetic batch:
+
+```bash
+python -m scripts.run_all_experiments
 ```

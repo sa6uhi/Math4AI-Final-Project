@@ -1,14 +1,22 @@
 import argparse
 
+from src.config import (
+    CLI_RUN_DESCRIPTION,
+    DATASET_CHOICES,
+    DEFAULT_SEED,
+    MODEL_CHOICES,
+    REPEAT_SEEDS_DEFAULT,
+    parse_seed_list,
+)
 from src.run_experiment import ExperimentRunner
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run one Math4AI synthetic experiment.")
-    parser.add_argument("--dataset", choices=["moons", "linear_gaussian", "digits"], required=True)
-    parser.add_argument("--model", choices=["softmax", "hidden_layer"], required=True)
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--repeat-seeds", type=str, default="")
+    parser = argparse.ArgumentParser(description=CLI_RUN_DESCRIPTION)
+    parser.add_argument("--dataset", choices=DATASET_CHOICES, required=True)
+    parser.add_argument("--model", choices=MODEL_CHOICES, required=True)
+    parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    parser.add_argument("--repeat-seeds", type=str, default=REPEAT_SEEDS_DEFAULT)
     return parser.parse_args()
 
 
@@ -17,7 +25,7 @@ def main() -> None:
     runner = ExperimentRunner(seed=args.seed)
 
     if args.repeat_seeds:
-        seeds = [int(item.strip()) for item in args.repeat_seeds.split(",") if item.strip()]
+        seeds = parse_seed_list(args.repeat_seeds)
         runner.run_repeated_seeds(dataset=args.dataset, model_type=args.model, seeds=seeds)
         return
 
