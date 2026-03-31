@@ -14,3 +14,8 @@ class PCAMath:
     exp_var_ratio=(S**2)/np.sum(S**2)
 
     return Vt, S, exp_var_ratio
+
+  @staticmethod
+  def project(X:np.ndarray, Vt:np.ndarray, m:int) -> np.ndarray:
+      X_centered=X-np.mean(X,axis=0)
+      return np.dot(X_centered, Vt[:m, :].T)
