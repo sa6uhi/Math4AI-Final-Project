@@ -1,3 +1,5 @@
+"""Visualization utilities for decision boundary and sample plots."""
+
 from pathlib import Path
 from typing import Callable
 
