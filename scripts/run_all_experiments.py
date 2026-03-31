@@ -10,7 +10,7 @@ def main() -> None:
         ("moons", "softmax"),
     ]
     for dataset, model_type in runs:
-        runner.run(dataset=dataset, model_type=model_type)
+        runner.run(dataset=dataset, model_type=model_type, seed=42)
 
 
 if __name__ == "__main__":
