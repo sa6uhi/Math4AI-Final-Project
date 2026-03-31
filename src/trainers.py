@@ -1,7 +1,10 @@
+"""Training loops for linear and one-hidden-layer softmax models."""
+
 from typing import List, Tuple
 
 import numpy as np
 
+from .config import DEFAULT_SEED
 from .models import HiddenLayerClassifier, SoftmaxMath, SoftmaxRegressionClassifier
 
 
@@ -17,7 +20,7 @@ class SoftmaxTrainer:
         learning_rate: float,
         lambda_reg: float,
         batch_size: int | None = None,
-        seed: int = 42,
+        seed: int = DEFAULT_SEED,
     ) -> None:
         self.epochs = epochs
         self.learning_rate = learning_rate
@@ -80,7 +83,7 @@ class HiddenLayerTrainer:
         learning_rate: float,
         lambda_reg: float,
         batch_size: int | None = None,
-        seed: int = 42,
+        seed: int = DEFAULT_SEED,
     ) -> None:
         self.epochs = epochs
         self.learning_rate = learning_rate
