@@ -95,7 +95,7 @@ python -m scripts.run_experiment --dataset digits --model hidden_layer --ablate-
 Run Track A PCA workflow (scree, 2D projection, and m={10,20,40} comparison):
 
 ```bash
-python scripts/run_track_a.py
+python -m scripts.run_track_a
 ```
 
 ## Container Run
@@ -107,6 +107,7 @@ From project root:
 ```bash
 docker compose -f container/compose.yaml up --build
 docker compose -f container/compose.yaml down
+docker compose -f container/compose.yaml run --rm math4ai-track-a
 ```
 
 ## Reproducibility Notes
@@ -156,5 +157,5 @@ Figures:
 
 - If matplotlib cache warnings appear in containers, compose already sets writable HOME and MPLCONFIGDIR.
 - If permissions fail on mounted outputs, run compose as configured in container/compose.yaml.
-- If module import fails for src, make sure you run commands from project root.
+- If module import fails for src, run from project root using module commands (for example, `python -m scripts.run_track_a`).
 - If `compose up` appears to print repeated experiment blocks, you are seeing accumulated logs from the same stopped container. Use `docker compose -f container/compose.yaml down -v && docker compose -f container/compose.yaml up --build` for a fresh run.
