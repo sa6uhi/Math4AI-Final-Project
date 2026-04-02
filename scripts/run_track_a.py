@@ -23,7 +23,7 @@ def run_track_a():
     plt.savefig(FIGURES_DIR / "track_a_scree.png")
 
     #2D Visualization
-    X_2d=PCAMath.project(X_train,Vt,2)
+    X_2d=PCAMath.project(X_train, Vt, train_mean, 2)
     plt.figure(figsize=(7, 5))
     plt.scatter(X_2d[:, 0], X_2d[:, 1], c=y_train, cmap='tab10', s=5, alpha=0.6)
     plt.colorbar(label='Digit Class')

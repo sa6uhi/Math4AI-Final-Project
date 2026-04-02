@@ -90,6 +90,14 @@ python -m scripts.run_experiment --dataset digits --model hidden_layer --optimiz
 python -m scripts.run_experiment --dataset digits --model hidden_layer --ablate-hidden-optimizers --seed 42
 ```
 
+## Track A Command
+
+Run Track A PCA workflow (scree, 2D projection, and m={10,20,40} comparison):
+
+```bash
+python scripts/run_track_a.py
+```
+
 ## Container Run
 
 ### Docker Compose
@@ -133,6 +141,7 @@ Metrics:
 - results/digits_softmax_repeated_seed_summary.csv
 - results/digits_hidden_layer_adam_repeated_seed_summary.csv
 - results/digits_hidden_layer_optimizer_ablation_seed42.csv
+- results/track_a_comparison.csv
 
 Figures:
 
@@ -140,6 +149,8 @@ Figures:
 - figures/linear_gaussian_hidden_layer_seed42_boundary.png
 - figures/moons_softmax_seed42_boundary.png
 - figures/moons_hidden_layer_seed42_boundary.png
+- figures/track_a_scree.png
+- figures/track_a_viz_2d.png
 
 ## Troubleshooting
 

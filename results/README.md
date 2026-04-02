@@ -6,6 +6,7 @@ Generated CSV metrics from experiment runs.
 
 - `<dataset>_<model>_seed<seed>_metrics.csv`
 - `<dataset>_<model>_repeated_seed_summary.csv`
+- `track_a_comparison.csv`
 
 ## Metric history schema
 
@@ -19,3 +20,9 @@ Where:
 - `metric` is `test_cross_entropy` or `test_accuracy`
 - `n` is the number of seeds included in the summary
 - CI columns represent a two-sided 95% confidence interval
+
+## Track A comparison schema
+
+`m,test_accuracy`
+
+Where `m` is the PCA dimension used in the softmax comparison.
