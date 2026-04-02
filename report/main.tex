@@ -36,7 +36,7 @@
     \city{Baku}
   \country{Azerbaijan}
 }
-\email{agshin.fataliyev@gmail.com}
+\email{fataliyevaqshin@gmail.com}
 
 \begin{document}
 
@@ -199,7 +199,26 @@ The hidden-layer model strongly outperforms softmax on moons in both accuracy an
 \end{figure*}
 
 \section{Advanced Track}
-This section is planned for completion in the full submission package. In the current draft, we focus on validating the core two-model comparison and implementation pipeline.
+In this section, we investigate the structural properties of the Digits dataset (d=64) through the application of Singular Value Decomposition (SVD\textbf{)}. The primary objective is to define the inherent dimensionality of the handwritten digits and evaluate the feasibility of linear compression without significant information loss.
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{track_a_scree.png}
+    \caption{Track A Scree Plot}
+
+        \label{fig:placeholder}
+\end{figure}
+By analyzing the distribution of eigenvalues, we observed that the first principal component captures approximately 15\% of the total variance. Quantitatively, the first 10 components capture roughly 75\% of the dataset’s total variance. The smooth decay of these singular values confirms that while the pixel space is 64-dimensional, the significant signal is concentrated in a much lower-dimensional linear subspace. This mathematically justifies discarding the trailing 24 dimensions, as they likely represent redundant background pixels or high-frequency noise.
+\begin{figure}
+        \centering
+        \includegraphics[width=1\linewidth]{track_a_viz_2d.png}
+        \caption{Track A 2D Visualization}
+        \label{fig:placeholder}
+    \end{figure}
+To visualize class separability, we projected the 64-dimensional samples onto the first two principal components (PC\_1, PC\_2). The 2D Visualization reveals that while specific digits (such as '0' and '4') form relatively isolated clusters in the periphery, there is a high degree of overlap in the central region among digits like '1', '8', and '9'. This "entanglement" provides empirical evidence that a linear hyperplane in low dimensions cannot perfectly segregate the classes, providing the experimental reasoning for utilizing non-linear hidden layers to warp the feature space into a separable configuration.
+
+We quantified the trade-off between dimensionality (m) and model performance using a Softmax Regression classifier ($\eta=0.1, \lambda=0.01$). The results demonstrate a "plateau" effect: moving from m=10 to m=40 components recovers 99.6\% of the raw model's accuracy. This implies that the "intrinsic dimensionality" for reliable digit recognition is approximately m=40, allowing for a 37.5\% reduction in feature space with negligible performance loss.
+
+In conclusion, this analysis demonstrates that linear dimensionality reduction effectively isolates the core "signal" of the dataset, identifying m=40 as the optimal threshold for balancing computational efficiency and classification accuracy.
 
 \section{Discussion}
 The experiments provide two clear messages. First, additional model complexity is not automatically useful. On linear Gaussian, the hidden layer does not improve test accuracy over the linear baseline, so the simpler model is already sufficient. Second, representation learning matters when geometry is nonlinear. On moons, the hidden layer transforms the feature space so the final separator fits the structure better, yielding a substantial performance gain.
