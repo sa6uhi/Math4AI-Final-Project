@@ -14,3 +14,19 @@ services:
       - /app/src/__pycache__
       - /app/scripts/__pycache__
     command: sh -c "mkdir -p /app/results /app/figures && python -m scripts.run_all_experiments"
+
+  math4ai-track-a:
+    build:
+      context: ..
+      dockerfile: container/Containerfile
+    container_name: math4ai-track-a
+    user: "0:0"
+    environment:
+      - HOME=/tmp
+      - MPLCONFIGDIR=/tmp/matplotlib
+    volumes:
+      - ..:/app
+      - /app/__pycache__
+      - /app/src/__pycache__
+      - /app/scripts/__pycache__
+    command: sh -c "mkdir -p /app/results /app/figures && python -m scripts.run_track_a"

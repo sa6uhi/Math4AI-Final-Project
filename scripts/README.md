@@ -10,6 +10,8 @@ Command-line entry points for running experiments.
 
 ## Common commands
 
+Run commands from the project root and use module form (`python -m ...`).
+
 Run one synthetic experiment:
 
 ```bash
@@ -46,5 +48,5 @@ python -m scripts.run_all_experiments
 Run Track A PCA workflow:
 
 ```bash
-python scripts/run_track_a.py
+python -m scripts.run_track_a
 ```
