@@ -2,8 +2,8 @@ import numpy as np
 from typing import Tuple
 
 class PCAMath:
-  @staticmethod
-  def compute_pca(X_train: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    @staticmethod
+    def compute_pca(X_train: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         train_mean = np.mean(X_train, axis=0)
         X_centered = X_train - train_mean
         
