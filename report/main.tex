@@ -198,6 +198,68 @@ The hidden-layer model strongly outperforms softmax on moons in both accuracy an
     \label{fig:all-boundaries}
 \end{figure*}
 
+\subsection{Digits benchmark (fixed split)}
+We evaluate final selected digits configurations on the provided fixed train/validation/test split: softmax regression and one-hidden-layer network (width 32) with Adam. Selection is based on validation cross-entropy, while reporting is on held-out test data.
+
+\begin{table}[t]
+    \centering
+    \caption{Digits final single-seed test results (seed 42).}
+    \label{tab:digits-final}
+    \begin{tabular}{lcc}
+        \toprule
+        Model & Test CE & Test Acc \\
+        \midrule
+        Softmax & 0.2710 & 0.9348 \\
+        Hidden-layer (Adam) & 0.1268 & 0.9565 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The hidden-layer model improves test cross-entropy and test accuracy over the softmax baseline on digits for the selected final setup.
+
+\subsection{Digits repeated-seed uncertainty (n=5)}
+To account for optimization stochasticity, we run the final digits configurations across five seeds (42--46) and report mean, standard deviation, and 95\% confidence intervals.
+
+\begin{table}[t]
+    \centering
+    \caption{Digits repeated-seed summary (n=5).}
+    \label{tab:digits-ci}
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{lcccccc}
+        \toprule
+        Model & Metric & Mean & Std & 95\% CI Low & 95\% CI High & n \\
+        \midrule
+        Softmax & Test CE & 0.2699 & 0.0014 & 0.2682 & 0.2717 & 5 \\
+        Softmax & Test Acc & 0.9370 & 0.0012 & 0.9354 & 0.9385 & 5 \\
+        Hidden-layer (Adam) & Test CE & 0.1655 & 0.0349 & 0.1221 & 0.2088 & 5 \\
+        Hidden-layer (Adam) & Test Acc & 0.9592 & 0.0051 & 0.9529 & 0.9656 & 5 \\
+        \bottomrule
+    \end{tabular}%
+    }
+\end{table}
+
+Across repeated seeds, the hidden-layer configuration maintains better average accuracy and lower average cross-entropy, while showing higher CE variance than softmax.
+
+\subsection{Hidden-layer optimizer ablation on digits}
+For the one-hidden-layer digits model, we compare SGD, Momentum, and Adam under the fixed protocol and report seed-42 test metrics.
+
+\begin{table}[t]
+    \centering
+    \caption{Digits hidden-layer optimizer ablation (seed 42).}
+    \label{tab:digits-opt-ablation}
+    \begin{tabular}{lcc}
+        \toprule
+        Optimizer & Test CE & Test Acc \\
+        \midrule
+        SGD & 0.1684 & 0.9511 \\
+        Momentum & 0.1505 & 0.9565 \\
+        Adam & 0.1268 & 0.9565 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Momentum and Adam tie on test accuracy here, while Adam achieves the lowest cross-entropy; therefore Adam is selected as the final hidden-layer optimizer in this report.
+
 \section{Advanced Track}
 In this section, we investigate the structural properties of the Digits dataset (d=64) through the application of Singular Value Decomposition (SVD\textbf{)}. The primary objective is to define the inherent dimensionality of the handwritten digits and evaluate the feasibility of linear compression without significant information loss.
 \begin{figure}
@@ -226,7 +288,7 @@ The experiments provide two clear messages. First, additional model complexity i
 These observations are consistent with the project's central framing question. The appropriate model class depends on data geometry and evidence, not on a blanket preference for nonlinear models.
 
 \section{Limitations}
-This draft reports synthetic-task evidence only. It does not yet include the fixed digits benchmark, repeated-seed confidence intervals, optimizer ablation on digits, and advanced track analysis. Because of that scope, conclusions here should be interpreted as validated for these two synthetic settings, not as a complete statement about all required capstone scenarios.
+This report includes synthetic tasks, the fixed digits benchmark, repeated-seed summaries for final digits configurations, optimizer ablation for the hidden-layer digits model, and Track A (SVD/PCA) analysis. Remaining limitations are that the optimizer ablation is reported for one fixed seed and the study is restricted to the provided datasets and protocol, so conclusions should be interpreted within this capstone scope rather than as universal claims across broader data regimes.
 
 \section*{Acknowledgments}
 We thank the course instructors and teaching assistants for guidance.
@@ -237,6 +299,8 @@ We thank the course instructors and teaching assistants for guidance.
 \appendix
 
 \section{Contribution Statement}
-Sabuhi Nazarov led implementation refactoring, experiment orchestration, containerized reproducibility, and primary synthetic runs. Agshin Fataliyev contributed to experimental analysis planning, result interpretation workflow, and report integration tasks.
+Agshin Fataliyev led Track A implementation and analysis (SVD/PCA workflow, scree/2D interpretation, and dimensionality comparison summary), and contributed to broader result interpretation and final report integration.
+
+Sabuhi Nazarov led core implementation and integration across the main source files and experiment scripts, including training/evaluation pipeline updates, configuration refactoring, experiment orchestration, handled documentation maintenance and updates.
 
 \end{document}
