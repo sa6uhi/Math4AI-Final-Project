@@ -226,7 +226,7 @@ The experiments provide two clear messages. First, additional model complexity i
 These observations are consistent with the project's central framing question. The appropriate model class depends on data geometry and evidence, not on a blanket preference for nonlinear models.
 
 \section{Limitations}
-This draft reports synthetic-task evidence only. It does not yet include the fixed digits benchmark, repeated-seed confidence intervals, optimizer ablation on digits, and advanced track analysis. Because of that scope, conclusions here should be interpreted as validated for these two synthetic settings, not as a complete statement about all required capstone scenarios.
+This report includes synthetic tasks, the fixed digits benchmark, repeated-seed summaries for final digits configurations, optimizer ablation for the hidden-layer digits model, and Track A (SVD/PCA) analysis. Remaining limitations are that the optimizer ablation is reported for one fixed seed and the study is restricted to the provided datasets and protocol, so conclusions should be interpreted within this capstone scope rather than as universal claims across broader data regimes.
 
 \section*{Acknowledgments}
 We thank the course instructors and teaching assistants for guidance.
@@ -237,6 +237,6 @@ We thank the course instructors and teaching assistants for guidance.
 \appendix
 
 \section{Contribution Statement}
-Sabuhi Nazarov led implementation refactoring, experiment orchestration, containerized reproducibility, and primary synthetic runs. Agshin Fataliyev contributed to experimental analysis planning, result interpretation workflow, and report integration tasks.
+Sabuhi Nazarov led implementation refactoring, experiment orchestration, containerized reproducibility, and primary synthetic runs. Agshin Fataliyev led Track A implementation and analysis (SVD/PCA workflow, scree/2D interpretation, and dimensionality comparison summary), and contributed to broader result interpretation and report integration.
 
 \end{document}
