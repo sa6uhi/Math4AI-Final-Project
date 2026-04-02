@@ -11,6 +11,7 @@ Implementation code for Math4AI experiments.
 - `plotting.py`: `DecisionBoundaryPlotter`
 - `io_utils.py`: `MetricsWriter`
 - `run_experiment.py`: `ExperimentRunner` orchestration class
+- `track_a_pca.py`: PCA/SVD utilities used by Track A workflow
 
 ## Notes
 
@@ -47,4 +48,10 @@ Run hidden-layer optimizer ablation:
 
 ```bash
 python -m src.run_experiment --dataset digits --model hidden_layer --ablate-hidden-optimizers --seed 42
+```
+
+Run Track A script entrypoint:
+
+```bash
+python scripts/run_track_a.py
 ```

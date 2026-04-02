@@ -6,6 +6,7 @@ Command-line entry points for running experiments.
 
 - `run_experiment.py`: Run one experiment or repeated-seed summary.
 - `run_all_experiments.py`: Batch helper for baseline experiment runs.
+- `run_track_a.py`: Run Track A PCA workflow for digits.
 
 ## Common commands
 
@@ -40,4 +41,10 @@ Run the default synthetic batch:
 
 ```bash
 python -m scripts.run_all_experiments
+```
+
+Run Track A PCA workflow:
+
+```bash
+python scripts/run_track_a.py
 ```
